@@ -178,3 +178,23 @@ class TestProductRoutes(TestCase):
         data = response.get_json()
         # logging.debug("data = %s", data)
         return len(data)
+
+    def test_get_product(self):
+        """Test API can get a single product (GET request)."""
+        # Create a product in the database
+        test_product = self._create_products(1)[0]
+
+        # Make a GET request to fetch the product by ID
+        response = self.client.get(f"{BASE_URL}/{test_product.id}")
+
+        # Verify that the response is 200 OK
+        self.assertEqual(response.status_code, status.HTTP_200_OK, "Could not retrieve product")
+
+        # Verify that the data returned is correct
+        returned_product = response.get_json()
+        self.assertEqual(returned_product['id'], test_product.id, "Product ID does not match")
+        self.assertEqual(returned_product['name'], test_product.name, "Product name does not match")
+        self.assertEqual(returned_product['description'], test_product.description, "Product description does not match")
+        self.assertEqual(Decimal(returned_product['price']), test_product.price, "Product price does not match")
+        self.assertEqual(returned_product['available'], test_product.available, "Product availability does not match")
+        self.assertEqual(returned_product['category'], test_product.category.name, "Product category does not match")
