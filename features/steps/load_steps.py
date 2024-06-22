@@ -32,21 +32,26 @@ HTTP_204_NO_CONTENT = 204
 
 @given('the following products')
 def step_impl(context):
-    """ Delete all Products and load new ones """
-    #
-    # List all of the products and delete them one by one
-    #
+    """Delete all Products and load new ones."""
+    # First, delete existing products to start with a clean slate
     rest_endpoint = f"{context.base_url}/products"
-    context.resp = requests.get(rest_endpoint)
-    assert(context.resp.status_code == HTTP_200_OK)
-    for product in context.resp.json():
-        context.resp = requests.delete(f"{rest_endpoint}/{product['id']}")
-        assert(context.resp.status_code == HTTP_204_NO_CONTENT)
+    response = requests.get(rest_endpoint)
+    assert response.status_code == HTTP_200_OK
+    
+    # Delete each product found
+    for product in response.json():
+        delete_response = requests.delete(f"{rest_endpoint}/{product['id']}")
+        assert delete_response.status_code == HTTP_204_NO_CONTENT
 
-    #
-    # load the database with new products
-    #
+    # Now, load the new products from the background data in the feature files
     for row in context.table:
-        #
-        # ADD YOUR CODE HERE TO CREATE PRODUCTS VIA THE REST API
-        #
+        payload = {
+            "name": row['name'],
+            "description": row['description'],
+            "price": row['price'],
+            "available": row['available'] in ['True', 'true', '1'],  # Convert to boolean
+            "category": row['category']
+        }
+        post_response = requests.post(rest_endpoint, json=payload)
+        assert post_response.status_code == HTTP_201_CREATED
+
